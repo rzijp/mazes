@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+  <style>
+
+  body {
+    background: #000;
+  }
+
+  </style>
+  <body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  <script src="/grid.js"></script>
+  <script>
+
+function binaryTree(cells) {
+  /* At every iteration, toss a coin to link to N of E neighbour.
+  if no N or E neighbour, choose the only option available.
+    if both no N and E neighbour, halt. */
+  for (var i = cellsHigh - 1; i >= 0; i--) {
+    for (var j = 0; j < cellsWide; j++) {
+      idx = i * cellsWide + j;
+      // build list of available neighbours
+      neighbours = [];
+      if (cells[idx].N !== null) {
+        neighbours.push(cells[idx].N);
+      }
+      if(cells[idx].E !== null) {
+        neighbours.push(cells[idx].E);
+      }
+      // randomly pick the neighbour to link to
+      if (neighbours.length > 0) {
+        selected = Math.floor(Math.random() * neighbours.length);
+        // add the selected neighbour as link, bi-directionally.
+        cells[idx].links.push(neighbours[selected]);
+        cells[neighbours[selected]].links.push(idx);
+      }
+    }
+  }
+}
+
+function sidewinder(cells) {
+  function toss() {
+    if (Math.floor(Math.random() * 2) === 0) {
+      return heads;
+    } else {
+      return tails;
+    }
+  }
+
+  for (var i = cellsHigh - 1; i >= 0; i--) {
+    j = 0;
+    while (j < cellsWide) {
+      idx = i * cellsWide + j;
+      // sidewinder build a 'run' by going E if a toss of a coin is tails.
+      // when the toss is heads, stop expanding the run and select randomly
+      // out of the run which cell expands N.
+      run = [idx];
+      while (j < cellsWide - 1 && (i === 0 || toss() === tails)) { // if i === 0, expand E by default
+        cells[idx].links.push(idx+1);
+        cells[idx+1].links.push(idx);
+        run.push(idx+1);
+        j++;
+        idx++;
+      } // toss() was heads, or E border is reached
+      if (i > 0) { // only expand N if there is an upper row
+        selected = run[Math.floor(Math.random() * run.length)];
+        cells[selected].links.push(cells[selected].N);
+        cells[cells[selected].N].links.push(selected);
+      }
+      j++;
+    }
+  }
+}
+
+initGrid();
+//binaryTree(cells);
+sidewinder(cells);
+drawGrid();
+
+d3.select(self.frameElement).style("height", height + "px");
+
+</script>
